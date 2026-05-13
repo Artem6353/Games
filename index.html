@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="Gold Mining Clicker - высокопроизводительная браузерная игра">
+    <title>Gold Mining Clicker</title>
+    <style>
+        /* ============================================
+           CSS RESET & BASE STYLES
+           ============================================ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --primary-gold: #ffd700;
+            --secondary-gold: #ffb347;
+            --dark-bg: #1a1a2e;
+            --darker-bg: #0f0f1a;
+            --panel-bg: #16213e;
+            --accent-blue: #4a9eff;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #2a2a4a;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(135deg, var(--darker-bg) 0%, var(--dark-bg) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           LAYOUT & GRID
+           ============================================ */
+        .game-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr auto;
+            min-height: 100vh;
+            min-height: 100dvh;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .game-container {
+                grid-template-columns: 300px 1fr 350px;
+                grid-template-rows: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        /* ============================================
+           HEADER
+           ============================================ */
+        .header {
+            background: var(--panel-bg);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .gold-display {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .gold-icon {
+            width: 28px;
+            height: 28px;
+            fill: var(--primary-gold);
+            animation: goldPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes goldPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .gps-display {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-icon {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-primary);
+        }
+
+        .btn-icon:hover {
+            background: var(--panel-bg);
+            border-color: var(--primary-gold);
+        }
+
+        /* ============================================
+           MINING SECTION (LEFT PANEL)
+           ============================================ */
+        .mining-section {
+            background: var(--panel-bg);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-right: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mine-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 1rem 0;
+        }
+
+        .mine-button {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #4a4a6a, #2a2a4a);
+            border: 4px solid var(--border-color);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s ease, border-color 0.2s ease;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .mine-button::before {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 10%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle at 40% 40%, #6a6a8a, #3a3a5a);
+            border-radius: 50%;
+        }
+
+        .mine-button::after {
+            content: '⛏️';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            z-index: 2;
+        }
+
+        .mine-button:hover {
+            border-color: var(--primary-gold);
+        }
+
+        .mine-button:active {
+            transform: scale(0.95);
+        }
+
+        .mine-button.clicked {
+            animation: mineClick 0.1s ease-out;
+        }
+
+        @keyframes mineClick {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.92); }
+            100% { transform: scale(1); }
+        }
+
+        .click-power-display {
+            text-align: center;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: var(--dark-bg);
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .click-power-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .click-power-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-gold);
+        }
+
+        /* ============================================
+           MAIN CONTENT (UPGRADES & RESEARCH)
+           ============================================ */
+        .main-section {
+            background: var(--panel-bg);
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-gold);
+            border-bottom-color: var(--primary-gold);
+            background: rgba(255, 215, 0, 0.05);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upgrade-category {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary-gold);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upgrade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .upgrade-card {
+            background: var(--dark-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upgrade-card:hover {
+            border-color: var(--primary-gold);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            filter: grayscale(0.8);
+        }
+
+        .upgrade-card.disabled:hover {
+            transform: none;
+            border-color: var(--border-color);
+        }
+
+        .upgrade-card.purchased {
+            border-color: var(--accent-green);
+        }
+
+        .upgrade-card.purchased::after {
+            content: '✓';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .upgrade-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .upgrade-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .upgrade-level {
+            background: var(--panel-bg);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .upgrade-description {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .upgrade-cost {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+            color: var(--primary-gold);
+            font-weight: 600;
+        }
+
+        .upgrade-bonus {
+            font-size: 0.75rem;
+            color: var(--accent-green);
+            margin-top: 0.25rem;
+        }
+
+        /* Research Tree Styles */
+        .research-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .research-branch {
+            background: var(--dark-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .branch-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .research-node {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .research-node:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .research-node.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+            filter: grayscale(1);
+        }
+
+        .research-node.researched {
+            border-color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .research-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--dark-bg);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        .research-info {
+            flex: 1;
+        }
+
+        .research-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .research-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .research-cost {
+            font-size: 0.8rem;
+            color: var(--primary-gold);
+            font-weight: 600;
+        }
+
+        /* ============================================
+           RIGHT PANEL (STATS & EVENTS)
+           ============================================ */
+        .stats-section {
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .stats-panel {
+            margin-bottom: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--primary-gold);
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .event-banner {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 179, 71, 0.1));
+            border: 1px solid var(--primary-gold);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            animation: eventPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes eventPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+        }
+
+        .event-name {
+            font-weight: bold;
+            color: var(--primary-gold);
+            margin-bottom: 0.25rem;
+        }
+
+        .event-timer {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .prestige-section {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2), rgba(75, 0, 130, 0.1));
+            border: 1px solid #8a2be2;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .prestige-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #da70d6;
+            margin-bottom: 0.5rem;
+        }
+
+        .prestige-currency {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.25rem;
+            color: #da70d6;
+            margin-bottom: 0.75rem;
+        }
+
+        .prestige-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: linear-gradient(135deg, #8a2be2, #4b0082);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .prestige-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .prestige-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* ============================================
+           ACHIEVEMENTS
+           ============================================ */
+        .achievements-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--dark-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .achievement-item.unlocked {
+            border-color: var(--accent-green);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .achievement-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel-bg);
+            border-radius: 8px;
+        }
+
+        .achievement-info {
+            flex: 1;
+        }
+
+        .achievement-name {
+            font-weight: bold;
+            font-size: 0.875rem;
+        }
+
+        .achievement-desc {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* ============================================
+           CANVAS OVERLAY FOR PARTICLES
+           ============================================ */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* ============================================
+           FLOATING TEXT ANIMATIONS
+           ============================================ */
+        .floating-text {
+            position: fixed;
+            pointer-events: none;
+            font-weight: bold;
+            color: var(--primary-gold);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            animation: floatUp 1s ease-out forwards;
+            will-change: transform, opacity;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.2);
+            }
+        }
+
+        /* ============================================
+           MODALS
+           ============================================ */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--panel-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-gold);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            padding: 0.75rem 2rem;
+            background: var(--primary-gold);
+            color: var(--dark-bg);
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 2rem;
+            background: var(--dark-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--panel-bg);
+        }
+
+        /* ============================================
+           SETTINGS PANEL
+           ============================================ */
+        .settings-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--dark-bg);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary-gold);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(24px);
+        }
+
+        /* ============================================
+           RESPONSIVE ADJUSTMENTS
+           ============================================ */
+        @media (max-width: 767px) {
+            .game-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+            }
+
+            .mining-section {
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                padding: 1.5rem 1rem;
+            }
+
+            .mine-container {
+                width: 220px;
+                height: 220px;
+            }
+
+            .mine-button::after {
+                font-size: 3rem;
+            }
+
+            .stats-section {
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+
+            .header {
+                position: static;
+            }
+
+            .upgrade-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============================================
+           PERFORMANCE MODE STYLES
+           ============================================ */
+        .performance-mode .mine-button {
+            animation: none;
+        }
+
+        .performance-mode .gold-icon {
+            animation: none;
+        }
+
+        .performance-mode .event-banner {
+            animation: none;
+        }
+
+        .performance-mode .upgrade-card:hover {
+            transform: none;
+        }
+
+        /* ============================================
+           OFFLINE PROGRESS MODAL
+           ============================================ */
+        .offline-summary {
+            background: var(--dark-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .offline-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        /* ============================================
+           NOTIFICATIONS
+           ============================================ */
+        .notification-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1500;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .notification {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            min-width: 280px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            border-color: var(--accent-green);
+        }
+
+        .notification.warning {
+            border-color: var(--primary-gold);
+        }
+
+        .notification.error {
+            border-color: var(--accent-red);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* ============================================
+           LOADING STATE
+           ============================================ */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--darker-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           SAVE INDICATOR
+           ============================================ */
+        .save-indicator {
+            position: fixed;
+            bottom: 1rem;
+            left: 1rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .save-indicator.saving {
+            color: var(--primary-gold);
+        }
+
+        .save-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+        }
+
+        .save-indicator.saving .save-dot {
+            background: var(--primary-gold);
+            animation: blink 1s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <!-- Particle Canvas -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Save Indicator -->
+    <div class="save-indicator" id="saveIndicator">
+        <span class="save-dot"></span>
+        <span id="saveText">Сохранено</span>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <h2 class="modal-title">⚙️ Настройки</h2>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <div class="settings-label">
+                        <span>Режим производительности</span>
+                        <div class="toggle-switch" id="perfModeToggle"></div>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem;">
+                        Отключает частицы и сложные анимации для лучшей производительности на слабых устройствах
+                    </p>
+                </div>
+                <div class="settings-group">
+                    <div class="settings-label">
+                        <span>Звук (заглушка)</span>
+                        <div class="toggle-switch" id="soundToggle"></div>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <button class="btn-secondary" id="resetSaveBtn" style="width: 100%; margin-top: 1rem;">
+                        🗑️ Сбросить сохранение
+                    </button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-primary" id="closeSettingsBtn">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prestige Confirmation Modal -->
+    <div class="modal-overlay" id="prestigeModal">
+        <div class="modal-content">
+            <h2 class="modal-title">💎 Престиж</h2>
+            <div class="modal-body">
+                <p>Вы собираетесь начать заново, но получите <strong id="prestigeGainDisplay">0</strong> Слитков Вечности.</p>
+                <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
+                    Каждый Слиток Вечности даёт +10% ко всей добыче навсегда и открывает новые механики.
+                </p>
+                <div class="offline-summary">
+                    <div class="offline-row">
+                        <span>Текущий бонус:</span>
+                        <span id="currentPrestigeBonus">+0%</span>
+                    </div>
+                    <div class="offline-row">
+                        <span>Новый бонус:</span>
+                        <span id="newPrestigeBonus" style="color: var(--accent-green);">+0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="cancelPrestigeBtn">Отмена</button>
+                <button class="btn-primary" id="confirmPrestigeBtn">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container">
+        <!-- Header -->
+        <header class="header">
+            <div>
+                <div class="gold-display">
+                    <svg class="gold-icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    <span id="goldAmount">0</span>
+                </div>
+                <div class="gps-display">
+                    <span id="gpsAmount">0</span> золота/сек
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" id="statsBtn" title="Статистика">📊</button>
+                <button class="btn-icon" id="achievementsBtn" title="Достижения">🏆</button>
+                <button class="btn-icon" id="settingsBtn" title="Настройки">⚙️</button>
+            </div>
+        </header>
+
+        <!-- Mining Section -->
+        <section class="mining-section">
+            <div class="mine-container">
+                <button class="mine-button" id="mineButton" aria-label="Добыть золото"></button>
+            </div>
+            <div class="click-power-display">
+                <div class="click-power-label">Сила клика</div>
+                <div class="click-power-value" id="clickPower">1</div>
+            </div>
+            <div class="click-power-display" style="margin-top: 0.5rem;">
+                <div class="click-power-label">Множитель</div>
+                <div class="click-power-value" id="globalMultiplier">x1.00</div>
+            </div>
+        </section>
+
+        <!-- Main Section -->
+        <main class="main-section">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="upgrades">⛏️ Улучшения</button>
+                <button class="tab-btn" data-tab="research">🔬 Исследования</button>
+                <button class="tab-btn" data-tab="personnel">👥 Персонал</button>
+                <button class="tab-btn" data-tab="infrastructure">🏭 Инфраструктура</button>
+            </div>
+
+            <!-- Upgrades Tab -->
+            <div class="tab-content active" id="upgradesTab">
+                <div class="upgrade-category">
+                    <div class="category-title">⛏️ Инструменты</div>
+                    <div class="upgrade-grid" id="toolsGrid"></div>
+                </div>
+            </div>
+
+            <!-- Research Tab -->
+            <div class="tab-content" id="researchTab">
+                <div class="research-tree" id="researchTree"></div>
+            </div>
+
+            <!-- Personnel Tab -->
+            <div class="tab-content" id="personnelTab">
+                <div class="upgrade-category">
+                    <div class="category-title">👷 Шахтёры</div>
+                    <div class="upgrade-grid" id="minersGrid"></div>
+                </div>
+                <div class="upgrade-category">
+                    <div class="category-title">🔧 Инженеры</div>
+                    <div class="upgrade-grid" id="engineersGrid"></div>
+                </div>
+            </div>
+
+            <!-- Infrastructure Tab -->
+            <div class="tab-content" id="infrastructureTab">
+                <div class="upgrade-category">
+                    <div class="category-title">🏗️ Постройки</div>
+                    <div class="upgrade-grid" id="buildingsGrid"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Stats Section -->
+        <aside class="stats-section">
+            <!-- Active Event -->
+            <div id="eventContainer"></div>
+
+            <!-- Prestige -->
+            <div class="prestige-section">
+                <div class="prestige-title">💎 Слитки Вечности</div>
+                <div class="prestige-currency">
+                    <span id="eternityBars">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Бонус:</span>
+                    <span class="stat-value" id="prestigeBonus">+0%</span>
+                </div>
+                <button class="prestige-btn" id="prestigeBtn">Престиж</button>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-panel">
+                <div class="panel-title">📈 Статистика</div>
+                <div class="stat-row">
+                    <span class="stat-label">Всего добыто:</span>
+                    <span class="stat-value" id="totalMined">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Всего кликов:</span>
+                    <span class="stat-value" id="totalClicks">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Время игры:</span>
+                    <span class="stat-value" id="playTime">0:00</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Улучшений:</span>
+                    <span class="stat-value" id="upgradesCount">0</span>
+                </div>
+            </div>
+
+            <!-- Recent Achievements -->
+            <div class="stats-panel">
+                <div class="panel-title">🏆 Достижения</div>
+                <div class="achievements-list" id="achievementsList"></div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // ============================================
+        // GAME CORE MODULE
+        // ============================================
+        const Game = (function() {
+            'use strict';
+
+            // ============================================
+            // CONSTANTS & CONFIGURATION
+            // ============================================
+            const CONFIG = {
+                SAVE_KEY: 'goldMiningSave_v1',
+                SAVE_INTERVAL: 10000, // 10 seconds
+                AUTOSAVE_DEBOUNCE: 5000,
+                FPS_TARGET: 60,
+                OFFLINE_LIMIT: 86400000, // 24 hours max offline
+                PERFORMANCE_THRESHOLD: 30, // FPS threshold for auto performance mode
+                NUMBER_FORMATTERS: [
+                    { limit: 1e3, suffix: '', decimals: 0 },
+                    { limit: 1e6, suffix: 'K', decimals: 1 },
+                    { limit: 1e9, suffix: 'M', decimals: 2 },
+                    { limit: 1e12, suffix: 'B', decimals: 2 },
+                    { limit: 1e15, suffix: 'T', decimals: 2 },
+                    { limit: 1e18, suffix: 'Qa', decimals: 2 },
+                    { limit: 1e21, suffix: 'Qi', decimals: 2 },
+                    { limit: Infinity, suffix: '+', decimals: 2 }
+                ]
+            };
+
+            // ============================================
+            // GAME DATA DEFINITIONS
+            // ============================================
+            const TOOLS = [
+                { id: 'pickaxe_1', name: 'Каменная кирка', baseCost: 15, basePower: 1, description: 'Простая кирка для начала добычи' },
+                { id: 'pickaxe_2', name: 'Железная кирка', baseCost: 100, basePower: 3, description: 'Надёжная кирка из железа' },
+                { id: 'pickaxe_3', name: 'Золотая кирка', baseCost: 500, basePower: 8, description: 'Благородный инструмент' },
+                { id: 'drill_1', name: 'Ручной бур', baseCost: 2000, basePower: 20, description: 'Механизированное бурение' },
+                { id: 'drill_2', name: 'Алмазный бур', baseCost: 10000, basePower: 50, description: 'Сверхпрочное сверло' },
+                { id: 'laser_1', name: 'Лазерный резак', baseCost: 50000, basePower: 150, description: 'Высокотехнологичная добыча' },
+                { id: 'quantum_1', name: 'Квантовый экстрактор', baseCost: 1000000, basePower: 500, description: 'Добыча из параллельных реальностей' }
+            ];
+
+            const MINERS = [
+                { id: 'miner_1', name: 'Новичок', baseCost: 25, baseGPS: 1, description: 'Начинающий шахтёр' },
+                { id: 'miner_2', name: 'Опытный шахтёр', baseCost: 150, baseGPS: 5, description: 'Профессионал своего дела' },
+                { id: 'miner_3', name: 'Ветеран', baseCost: 750, baseGPS: 15, description: 'Многолетний опыт' },
+                { id: 'miner_4', name: 'Мастер', baseCost: 4000, baseGPS: 40, description: 'Элита добычи' },
+                { id: 'miner_5', name: 'Легенда', baseCost: 20000, baseGPS: 100, description: 'Живая легенда шахты' }
+            ];
+
+            const ENGINEERS = [
+                { id: 'engineer_1', name: 'Техник', baseCost: 500, baseGPS: 10, description: 'Обслуживает оборудование' },
+                { id: 'engineer_2', name: 'Инженер', baseCost: 3000, baseGPS: 30, description: 'Оптимизирует процессы' },
+                { id: 'engineer_3', name: 'Главный инженер', baseCost: 15000, baseGPS: 80, description: 'Руководит всеми системами' },
+                { id: 'engineer_4', name: 'Техногений', baseCost: 75000, baseGPS: 200, description: 'Гений автоматизации' }
+            ];
+
+            const BUILDINGS = [
+                { id: 'elevator_1', name: 'Грузовой лифт', baseCost: 1000, baseGPS: 25, description: 'Быстрая доставка руды' },
+                { id: 'sorter_1', name: 'Сортировочная линия', baseCost: 5000, baseGPS: 60, description: 'Автоматическая сортировка' },
+                { id: 'smelter_1', name: 'Плавильня', baseCost: 25000, baseGPS: 150, description: 'Переплавка руды в слитки' },
+                { id: 'refinery_1', name: 'Аффинажный завод', baseCost: 100000, baseGPS: 400, description: 'Очистка до 99.99%' },
+                { id: 'vault_1', name: 'Золотохранилище', baseCost: 500000, baseGPS: 1000, description: 'Надёжное хранение' }
+            ];
+
+            const RESEARCH_TREE = {
+                mining: {
+                    name: 'Добыча',
+                    icon: '⛏️',
+                    technologies: [
+                        { id: 'mining_1', name: 'Геологоразведка', cost: 500, description: '+20% ко всей добыче', effect: { type: 'global_mult', value: 0.2 }, prerequisites: [] },
+                        { id: 'mining_2', name: 'Глубинное бурение', cost: 2500, description: '+50% ко всей добыче', effect: { type: 'global_mult', value: 0.5 }, prerequisites: ['mining_1'] },
+                        { id: 'mining_3', name: 'Сейсмический сканер', cost: 10000, description: '+100% ко всей добыче', effect: { type: 'global_mult', value: 1.0 }, prerequisites: ['mining_2'] },
+                        { id: 'mining_4', name: 'Термоядерный бур', cost: 50000, description: '+250% ко всей добыче', effect: { type: 'global_mult', value: 2.5 }, prerequisites: ['mining_3'] }
+                    ]
+                },
+                automation: {
+                    name: 'Автоматизация',
+                    icon: '⚙️',
+                    technologies: [
+                        { id: 'auto_1', name: 'Конвейерная лента', cost: 750, description: '+25% к GPS персонала', effect: { type: 'gps_mult', value: 0.25 }, prerequisites: [] },
+                        { id: 'auto_2', name: 'Роботизация', cost: 5000, description: '+50% к GPS персонала', effect: { type: 'gps_mult', value: 0.5 }, prerequisites: ['auto_1'] },
+                        { id: 'auto_3', name: 'ИИ управление', cost: 25000, description: '+100% к GPS персонала', effect: { type: 'gps_mult', value: 1.0 }, prerequisites: ['auto_2'] },
+                        { id: 'auto_4', name: 'Наноассемблеры', cost: 100000, description: '+200% к GPS персонала', effect: { type: 'gps_mult', value: 2.0 }, prerequisites: ['auto_3'] }
+                    ]
+                },
+                economy: {
+                    name: 'Экономика',
+                    icon: '💰',
+                    technologies: [
+                        { id: 'econ_1', name: 'Оптимизация затрат', cost: 1000, description: '-10% к стоимости улучшений', effect: { type: 'cost_reduction', value: 0.1 }, prerequisites: [] },
+                        { id: 'econ_2', name: 'Рыночные связи', cost: 7500, description: '-20% к стоимости улучшений', effect: { type: 'cost_reduction', value: 0.2 }, prerequisites: ['econ_1'] },
+                        { id: 'econ_3', name: 'Монополия', cost: 30000, description: '-30% к стоимости улучшений', effect: { type: 'cost_reduction', value: 0.3 }, prerequisites: ['econ_2'] },
+                        { id: 'econ_4', name: 'Финансовая империя', cost: 150000, description: '-40% к стоимости улучшений', effect: { type: 'cost_reduction', value: 0.4 }, prerequisites: ['econ_3'] }
+                    ]
+                }
+            };
+
+            const ACHIEVEMENTS = [
+                { id: 'first_gold', name: 'Первое золото', description: 'Добудьте первое золото', condition: (state) => state.stats.totalMined >= 1, icon: '🥇' },
+                { id: 'hundred_clicks', name: 'Упорство', description: 'Сделайте 100 кликов', condition: (state) => state.stats.totalClicks >= 100, icon: '💪' },
+                { id: 'thousand_gold', name: 'Первая тысяча', description: 'Добудьте 1,000 золота', condition: (state) => state.stats.totalMined >= 1000, icon: '📦' },
+                { id: 'first_upgrade', name: 'Прогресс', description: 'Купите первое улучшение', condition: (state) => state.stats.upgradesPurchased >= 1, icon: '⬆️' },
+                { id: 'ten_upgrades', name: 'Коллекционер', description: 'Купите 10 улучшений', condition: (state) => state.stats.upgradesPurchased >= 10, icon: '🎯' },
+                { id: 'million_gold', name: 'Миллионер', description: 'Добудьте 1,000,000 золота', condition: (state) => state.stats.totalMined >= 1000000, icon: '💎' },
+                { id: 'first_prestige', name: 'Возрождение', description: 'Совершите первый престиж', condition: (state) => state.prestige.count > 0, icon: '🔄' },
+                { id: 'billion_gold', name: 'Миллиардер', description: 'Добудьте 1,000,000,000 золота', condition: (state) => state.stats.totalMined >= 1000000000, icon: '👑' }
+            ];
+
+            const EVENTS = [
+                { id: 'gold_rush', name: 'Золотая лихорадка!', description: 'x3 ко всей добыче', duration: 30000, effect: { type: 'global_mult', value: 3.0 }, icon: '🌟' },
+                { id: 'cave_in', name: 'Обвал!', description: '-50% к добыче', duration: 20000, effect: { type: 'global_mult', value: 0.5 }, icon: '⚠️' },
+                { id: 'market_boom', name: 'Рыночный бум', description: 'x2 ко всей добыче', duration: 45000, effect: { type: 'global_mult', value: 2.0 }, icon: '📈' },
+                { id: 'equipment_bonus', name: 'Бонус оборудования', description: '+50% к силе клика', duration: 25000, effect: { type: 'click_mult', value: 1.5 }, icon: '🔧' }
+            ];
+
+            // ============================================
+            // UTILITY FUNCTIONS
+            // ============================================
+            function formatNumber(num) {
+                if (typeof num === 'bigint') {
+                    num = Number(num);
+                }
+                
+                if (num < 1000) {
+                    return Math.floor(num).toString();
+                }
+
+                for (let formatter of CONFIG.NUMBER_FORMATTERS) {
+                    if (num < formatter.limit) {
+                        const scaled = num / (formatter.limit / 1000);
+                        return scaled.toFixed(formatter.decimals).replace(/\.?0+$/, '') + formatter.suffix;
+                    }
+                }
+
+                return num.toExponential(2);
+            }
+
+            function formatTime(ms) {
+                const totalSeconds = Math.floor(ms / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            function calculateCost(baseCost, level, costReduction = 0) {
+                const multiplier = 1.15; // Standard incremental cost
+                const cost = baseCost * Math.pow(multiplier, level);
+                return Math.floor(cost * (1 - costReduction));
+            }
+
+            function safeJSONParse(str, defaultValue) {
+                try {
+                    return JSON.parse(str);
+                } catch (e) {
+                    console.warn('Failed to parse JSON:', e);
+                    return defaultValue;
+                }
+            }
+
+            // ============================================
+            // STATE MANAGEMENT
+            // ============================================
+            function createInitialState() {
+                return {
+                    gold: 0,
+                    totalMined: 0,
+                    prestige: {
+                        count: 0,
+                        bonus: 0
+                    },
+                    tools: {},
+                    miners: {},
+                    engineers: {},
+                    buildings: {},
+                    research: [],
+                    achievements: [],
+                    stats: {
+                        totalClicks: 0,
+                        totalMined: 0,
+                        upgradesPurchased: 0,
+                        playTime: 0,
+                        startTime: Date.now()
+                    },
+                    settings: {
+                        performanceMode: false,
+                        soundEnabled: true
+                    },
+                    lastSave: Date.now(),
+                    lastOnline: Date.now()
+                };
+            }
+
+            function initializeCounts(state) {
+                // Initialize all upgrade counts to 0 if not present
+                TOOLS.forEach(t => { if (state.tools[t.id] === undefined) state.tools[t.id] = 0; });
+                MINERS.forEach(m => { if (state.miners[m.id] === undefined) state.miners[m.id] = 0; });
+                ENGINEERS.forEach(e => { if (state.engineers[e.id] === undefined) state.engineers[e.id] = 0; });
+                BUILDINGS.forEach(b => { if (state.buildings[b.id] === undefined) state.buildings[b.id] = 0; });
+            }
+
+            // ============================================
+            // CALCULATION ENGINE
+            // ============================================
+            function calculateClickPower(state) {
+                let power = 1; // Base click power
+
+                // Add tool bonuses
+                TOOLS.forEach(tool => {
+                    const level = state.tools[tool.id] || 0;
+                    power += tool.basePower * level;
+                });
+
+                // Apply research bonuses
+                state.research.forEach(researchId => {
+                    for (const branch of Object.values(RESEARCH_TREE)) {
+                        const tech = branch.technologies.find(t => t.id === researchId);
+                        if (tech && tech.effect.type === 'global_mult') {
+                            power *= (1 + tech.effect.value);
+                        }
+                    }
+                });
+
+                // Apply prestige bonus
+                power *= (1 + state.prestige.bonus * 0.1);
+
+                // Apply event bonuses
+                if (state.activeEvent && state.activeEvent.effect.type === 'click_mult') {
+                    power *= state.activeEvent.effect.value;
+                }
+
+                return power;
+            }
+
+            function calculateGPS(state) {
+                let gps = 0;
+
+                // Miners GPS
+                MINERS.forEach(miner => {
+                    const level = state.miners[miner.id] || 0;
+                    gps += miner.baseGPS * level;
+                });
+
+                // Engineers GPS
+                ENGINEERS.forEach(engineer => {
+                    const level = state.engineers[engineer.id] || 0;
+                    gps += engineer.baseGPS * level;
+                });
+
+                // Buildings GPS
+                BUILDINGS.forEach(building => {
+                    const level = state.buildings[building.id] || 0;
+                    gps += building.baseGPS * level;
+                });
+
+                // Apply research bonuses
+                state.research.forEach(researchId => {
+                    for (const branch of Object.values(RESEARCH_TREE)) {
+                        const tech = branch.technologies.find(t => t.id === researchId);
+                        if (tech && tech.effect.type === 'gps_mult') {
+                            gps *= (1 + tech.effect.value);
+                        }
+                        if (tech && tech.effect.type === 'global_mult') {
+                            gps *= (1 + tech.effect.value);
+                        }
+                    }
+                });
+
+                // Apply prestige bonus
+                gps *= (1 + state.prestige.bonus * 0.1);
+
+                // Apply event bonuses
+                if (state.activeEvent && state.activeEvent.effect.type === 'global_mult') {
+                    gps *= state.activeEvent.effect.value;
+                }
+
+                return gps;
+            }
+
+            function getCostReduction(state) {
+                let reduction = 0;
+
+                state.research.forEach(researchId => {
+                    for (const branch of Object.values(RESEARCH_TREE)) {
+                        const tech = branch.technologies.find(t => t.id === researchId);
+                        if (tech && tech.effect.type === 'cost_reduction') {
+                            reduction = Math.max(reduction, tech.effect.value);
+                        }
+                    }
+                });
+
+                return reduction;
+            }
+
+            function calculatePrestigeGain(state) {
+                // Formula: sqrt(totalMined / 1000000)
+                if (state.totalMined < 1000000) return 0;
+                return Math.floor(Math.sqrt(state.totalMined / 1000000));
+            }
+
+            // ============================================
+            // SAVE SYSTEM
+            // ============================================
+            function saveGame(state) {
+                state.lastSave = Date.now();
+                try {
+                    const saveData = JSON.stringify(state);
+                    localStorage.setItem(CONFIG.SAVE_KEY, saveData);
+                    showSaveIndicator(true);
+                } catch (e) {
+                    console.error('Save failed:', e);
+                    showNotification('Ошибка сохранения!', 'error');
+                }
+            }
+
+            const debouncedSave = debounce(saveGame, CONFIG.AUTOSAVE_DEBOUNCE);
+
+            function loadGame() {
+                try {
+                    const saved = localStorage.getItem(CONFIG.SAVE_KEY);
+                    if (saved) {
+                        const state = safeJSONParse(saved, null);
+                        if (state) {
+                            initializeCounts(state);
+                            return state;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Load failed:', e);
+                }
+                return createInitialState();
+            }
+
+            function resetGame() {
+                localStorage.removeItem(CONFIG.SAVE_KEY);
+                location.reload();
+            }
+
+            // ============================================
+            // EVENT SYSTEM
+            // ============================================
+            function startRandomEvent(state) {
+                if (state.activeEvent) return;
+
+                const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+                state.activeEvent = {
+                    ...event,
+                    endTime: Date.now() + event.duration
+                };
+
+                showNotification(`${event.icon} ${event.name}`, 'warning');
+            }
+
+            function updateEvents(state, deltaTime) {
+                if (state.activeEvent) {
+                    const remaining = state.activeEvent.endTime - Date.now();
+                    if (remaining <= 0) {
+                        state.activeEvent = null;
+                        showNotification('Событие завершено', 'success');
+                    }
+                }
+
+                // Random event chance (1% per second)
+                if (!state.activeEvent && Math.random() < 0.01 * (deltaTime / 1000)) {
+                    startRandomEvent(state);
+                }
+            }
+
+            // ============================================
+            // ACHIEVEMENT SYSTEM
+            // ============================================
+            function checkAchievements(state) {
+                ACHIEVEMENTS.forEach(achievement => {
+                    if (!state.achievements.includes(achievement.id) && achievement.condition(state)) {
+                        state.achievements.push(achievement.id);
+                        showNotification(`🏆 ${achievement.name}`, 'success');
+                    }
+                });
+            }
+
+            // ============================================
+            // PRESTIGE SYSTEM
+            // ============================================
+            function performPrestige(state) {
+                const gain = calculatePrestigeGain(state);
+                if (gain <= 0) return false;
+
+                const newPrestigeCount = state.prestige.count + gain;
+                const newBonus = newPrestigeCount * 0.1; // 10% per bar
+
+                // Reset progress but keep prestige
+                const newState = createInitialState();
+                newState.prestige = {
+                    count: newPrestigeCount,
+                    bonus: newBonus
+                };
+                newState.achievements = state.achievements;
+                newState.settings = state.settings;
+
+                return newState;
+            }
+
+            // ============================================
+            // UI MANAGER
+            // ============================================
+            const UI = {
+                elements: {},
+
+                init() {
+                    this.elements = {
+                        goldAmount: document.getElementById('goldAmount'),
+                        gpsAmount: document.getElementById('gpsAmount'),
+                        clickPower: document.getElementById('clickPower'),
+                        globalMultiplier: document.getElementById('globalMultiplier'),
+                        mineButton: document.getElementById('mineButton'),
+                        eternityBars: document.getElementById('eternityBars'),
+                        prestigeBonus: document.getElementById('prestigeBonus'),
+                        totalMined: document.getElementById('totalMined'),
+                        totalClicks: document.getElementById('totalClicks'),
+                        playTime: document.getElementById('playTime'),
+                        upgradesCount: document.getElementById('upgradesCount'),
+                        eventContainer: document.getElementById('eventContainer'),
+                        achievementsList: document.getElementById('achievementsList'),
+                        toolsGrid: document.getElementById('toolsGrid'),
+                        minersGrid: document.getElementById('minersGrid'),
+                        engineersGrid: document.getElementById('engineersGrid'),
+                        buildingsGrid: document.getElementById('buildingsGrid'),
+                        researchTree: document.getElementById('researchTree'),
+                        particleCanvas: document.getElementById('particleCanvas'),
+                        loadingOverlay: document.getElementById('loadingOverlay'),
+                        saveIndicator: document.getElementById('saveIndicator'),
+                        saveText: document.getElementById('saveText')
+                    };
+
+                    this.setupTabs();
+                    this.renderUpgrades();
+                    this.renderResearch();
+                },
+
+                setupTabs() {
+                    const tabBtns = document.querySelectorAll('.tab-btn');
+                    tabBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            tabBtns.forEach(b => b.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                            
+                            btn.classList.add('active');
+                            document.getElementById(`${btn.dataset.tab}Tab`).classList.add('active');
+                        });
+                    });
+                },
+
+                renderUpgrades() {
+                    const renderUpgradeCard = (item, level, container) => {
+                        const cost = calculateCost(item.baseCost, level, 0);
+                        const card = document.createElement('div');
+                        card.className = 'upgrade-card';
+                        card.dataset.id = item.id;
+                        card.innerHTML = `
+                            <div class="upgrade-header">
+                                <span class="upgrade-name">${item.name}</span>
+                                <span class="upgrade-level">Ур. ${level}</span>
+                            </div>
+                            <div class="upgrade-description">${item.description}</div>
+                            <div class="upgrade-cost">💰 ${formatNumber(cost)}</div>
+                            <div class="upgrade-bonus">+${item.basePower || item.baseGPS} ${item.basePower ? 'клик' : 'GPS'}</div>
+                        `;
+                        container.appendChild(card);
+                    };
+
+                    TOOLS.forEach(tool => renderUpgradeCard(tool, Game.state.tools[tool.id] || 0, this.elements.toolsGrid));
+                    MINERS.forEach(miner => renderUpgradeCard(miner, Game.state.miners[miner.id] || 0, this.elements.minersGrid));
+                    ENGINEERS.forEach(engineer => renderUpgradeCard(engineer, Game.state.engineers[engineer.id] || 0, this.elements.engineersGrid));
+                    BUILDINGS.forEach(building => renderUpgradeCard(building, Game.state.buildings[building.id] || 0, this.elements.buildingsGrid));
+                },
+
+                renderResearch() {
+                    const container = this.elements.researchTree;
+                    
+                    for (const [key, branch] of Object.entries(RESEARCH_TREE)) {
+                        const branchEl = document.createElement('div');
+                        branchEl.className = 'research-branch';
+                        branchEl.innerHTML = `<div class="branch-title">${branch.icon} ${branch.name}</div>`;
+                        
+                        branch.technologies.forEach(tech => {
+                            const isResearched = Game.state.research.includes(tech.id);
+                            const isLocked = tech.prerequisites.some(p => !Game.state.research.includes(p));
+                            
+                            const node = document.createElement('div');
+                            node.className = `research-node ${isResearched ? 'researched' : ''} ${isLocked && !isResearched ? 'locked' : ''}`;
+                            node.dataset.id = tech.id;
+                            node.innerHTML = `
+                                <div class="research-icon">${isResearched ? '✅' : '🔬'}</div>
+                                <div class="research-info">
+                                    <div class="research-name">${tech.name}</div>
+                                    <div class="research-desc">${tech.description}</div>
+                                    <div class="research-cost">💰 ${formatNumber(tech.cost)}</div>
+                                </div>
+                            `;
+                            branchEl.appendChild(node);
+                        });
+                        
+                        container.appendChild(branchEl);
+                    }
+                },
+
+                updateDisplay(state) {
+                    this.elements.goldAmount.textContent = formatNumber(Math.floor(state.gold));
+                    this.elements.gpsAmount.textContent = formatNumber(calculateGPS(state).toFixed(1));
+                    this.elements.clickPower.textContent = formatNumber(calculateClickPower(state).toFixed(1));
+                    this.elements.eternityBars.textContent = state.prestige.count;
+                    this.elements.prestigeBonus.textContent = `+${(state.prestige.bonus * 100).toFixed(0)}%`;
+                    this.elements.totalMined.textContent = formatNumber(state.stats.totalMined);
+                    this.elements.totalClicks.textContent = formatNumber(state.stats.totalClicks);
+                    this.elements.playTime.textContent = formatTime(state.stats.playTime * 1000);
+                    this.elements.upgradesCount.textContent = state.stats.upgradesPurchased;
+
+                    // Calculate global multiplier
+                    let mult = 1 + state.prestige.bonus * 0.1;
+                    if (state.activeEvent && state.activeEvent.effect.type === 'global_mult') {
+                        mult *= state.activeEvent.effect.value;
+                    }
+                    this.elements.globalMultiplier.textContent = `x${mult.toFixed(2)}`;
+
+                    // Update upgrade cards
+                    this.updateUpgradeCards();
+                    this.updateResearchNodes();
+                    this.updateEventBanner(state);
+                    this.updateAchievements();
+                },
+
+                updateUpgradeCards() {
+                    const updateCard = (item, level, container, type) => {
+                        const cost = calculateCost(item.baseCost, level, getCostReduction(Game.state));
+                        const card = container.querySelector(`[data-id="${item.id}"]`);
+                        if (card) {
+                            const canAfford = Game.state.gold >= cost;
+                            card.classList.toggle('disabled', !canAfford);
+                            card.querySelector('.upgrade-level').textContent = `Ур. ${level}`;
+                            card.querySelector('.upgrade-cost').textContent = `💰 ${formatNumber(cost)}`;
+                        }
+                    };
+
+                    TOOLS.forEach(tool => updateCard(tool, Game.state.tools[tool.id] || 0, this.elements.toolsGrid, 'tools'));
+                    MINERS.forEach(miner => updateCard(miner, Game.state.miners[miner.id] || 0, this.elements.minersGrid, 'miners'));
+                    ENGINEERS.forEach(engineer => updateCard(engineer, Game.state.engineers[engineer.id] || 0, this.elements.engineersGrid, 'engineers'));
+                    BUILDINGS.forEach(building => updateCard(building, Game.state.buildings[building.id] || 0, this.elements.buildingsGrid, 'buildings'));
+                },
+
+                updateResearchNodes() {
+                    const nodes = this.elements.researchTree.querySelectorAll('.research-node');
+                    nodes.forEach(node => {
+                        const techId = node.dataset.id;
+                        const isResearched = Game.state.research.includes(techId);
+                        const tech = Object.values(RESEARCH_TREE).flatMap(b => b.technologies).find(t => t.id === techId);
+                        const isLocked = tech && tech.prerequisites.some(p => !Game.state.research.includes(p));
+                        const canAfford = Game.state.gold >= tech.cost;
+
+                        node.classList.toggle('researched', isResearched);
+                        node.classList.toggle('locked', isLocked && !isResearched);
+                        node.classList.toggle('disabled', !canAfford && !isResearched && !isLocked);
+                    });
+                },
+
+                updateEventBanner(state) {
+                    if (state.activeEvent) {
+                        const remaining = Math.max(0, state.activeEvent.endTime - Date.now());
+                        this.elements.eventContainer.innerHTML = `
+                            <div class="event-banner">
+                                <div class="event-name">${state.activeEvent.icon} ${state.activeEvent.name}</div>
+                                <div class="event-timer">${state.activeEvent.description} • ${formatTime(remaining)}</div>
+                            </div>
+                        `;
+                    } else {
+                        this.elements.eventContainer.innerHTML = '';
+                    }
+                },
+
+                updateAchievements() {
+                    const unlocked = Game.state.achievements;
+                    this.elements.achievementsList.innerHTML = ACHIEVEMENTS.slice(0, 5).map(a => `
+                        <div class="achievement-item ${unlocked.includes(a.id) ? 'unlocked' : ''}">
+                            <div class="achievement-icon">${a.icon}</div>
+                            <div class="achievement-info">
+                                <div class="achievement-name">${a.name}</div>
+                                <div class="achievement-desc">${a.description}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                },
+
+                spawnFloatingText(x, y, text) {
+                    const el = document.createElement('div');
+                    el.className = 'floating-text';
+                    el.textContent = `+${formatNumber(text)}`;
+                    el.style.left = `${x}px`;
+                    el.style.top = `${y}px`;
+                    document.body.appendChild(el);
+                    
+                    setTimeout(() => el.remove(), 1000);
+                }
+            };
+
+            // ============================================
+            // PARTICLE SYSTEM (CANVAS)
+            // ============================================
+            const Particles = {
+                canvas: null,
+                ctx: null,
+                particles: [],
+                enabled: true,
+
+                init() {
+                    this.canvas = UI.elements.particleCanvas;
+                    this.ctx = this.canvas.getContext('2d');
+                    this.resize();
+                    window.addEventListener('resize', () => this.resize());
+                },
+
+                resize() {
+                    this.canvas.width = window.innerWidth;
+                    this.canvas.height = window.innerHeight;
+                },
+
+                spawn(x, y, count = 5) {
+                    if (!this.enabled) return;
+                    
+                    for (let i = 0; i < count; i++) {
+                        this.particles.push({
+                            x,
+                            y,
+                            vx: (Math.random() - 0.5) * 10,
+                            vy: -Math.random() * 10 - 5,
+                            life: 1,
+                            decay: 0.02 + Math.random() * 0.02,
+                            size: 3 + Math.random() * 4,
+                            color: `hsl(${45 + Math.random() * 15}, 100%, 50%)`
+                        });
+                    }
+                },
+
+                update() {
+                    if (!this.enabled) return;
+
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    
+                    for (let i = this.particles.length - 1; i >= 0; i--) {
+                        const p = this.particles[i];
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.3; // gravity
+                        p.life -= p.decay;
+
+                        if (p.life <= 0) {
+                            this.particles.splice(i, 1);
+                            continue;
+                        }
+
+                        this.ctx.globalAlpha = p.life;
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                        this.ctx.fill();
+                    }
+
+                    this.ctx.globalAlpha = 1;
+                },
+
+                setEnabled(enabled) {
+                    this.enabled = enabled;
+                    if (!enabled) {
+                        this.particles = [];
+                        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    }
+                }
+            };
+
+            // ============================================
+            // NOTIFICATION SYSTEM
+            // ============================================
+            function showNotification(message, type = 'info') {
+                const container = document.getElementById('notificationContainer');
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                container.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.style.animation = 'slideIn 0.3s ease-out reverse';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+
+            function showSaveIndicator(saving) {
+                const indicator = UI.elements.saveIndicator;
+                const text = UI.elements.saveText;
+                
+                if (saving) {
+                    indicator.classList.add('saving');
+                    text.textContent = 'Сохранение...';
+                } else {
+                    indicator.classList.remove('saving');
+                    text.textContent = 'Сохранено';
+                }
+            }
+
+            // ============================================
+            // INPUT HANDLING
+            // ============================================
+            function handleMineClick(e) {
+                e.preventDefault();
+                
+                const state = Game.state;
+                const power = calculateClickPower(state);
+                
+                state.gold += power;
+                state.totalMined += power;
+                state.stats.totalClicks++;
+                state.stats.totalMined += power;
+
+                // Visual feedback
+                UI.elements.mineButton.classList.add('clicked');
+                setTimeout(() => UI.elements.mineButton.classList.remove('clicked'), 100);
+
+                // Get click position for effects
+                let x, y;
+                if (e.touches && e.touches.length > 0) {
+                    x = e.touches[0].clientX;
+                    y = e.touches[0].clientY;
+                } else {
+                    x = e.clientX;
+                    y = e.clientY;
+                }
+
+                // Spawn effects
+                Particles.spawn(x, y, 8);
+                UI.spawnFloatingText(x, y, power);
+
+                // Check achievements
+                checkAchievements(state);
+
+                // Auto-save on significant action
+                debouncedSave(state);
+            }
+
+            function handleUpgradeClick(itemId, type) {
+                const state = Game.state;
+                const costReduction = getCostReduction(state);
+
+                let item, collection;
+                switch (type) {
+                    case 'tools': collection = state.tools; item = TOOLS.find(t => t.id === itemId); break;
+                    case 'miners': collection = state.miners; item = MINERS.find(m => m.id === itemId); break;
+                    case 'engineers': collection = state.engineers; item = ENGINEERS.find(e => e.id === itemId); break;
+                    case 'buildings': collection = state.buildings; item = BUILDINGS.find(b => b.id === itemId); break;
+                }
+
+                if (!item) return;
+
+                const level = collection[itemId] || 0;
+                const cost = calculateCost(item.baseCost, level, costReduction);
+
+                if (state.gold >= cost) {
+                    state.gold -= cost;
+                    collection[itemId] = level + 1;
+                    state.stats.upgradesPurchased++;
+                    
+                    showNotification(`Куплено: ${item.name}`, 'success');
+                    checkAchievements(state);
+                    debouncedSave(state);
+                }
+            }
+
+            function handleResearchClick(techId) {
+                const state = Game.state;
+                
+                // Find technology
+                let tech = null;
+                for (const branch of Object.values(RESEARCH_TREE)) {
+                    tech = branch.technologies.find(t => t.id === techId);
+                    if (tech) break;
+                }
+
+                if (!tech) return;
+                if (state.research.includes(techId)) return;
+                if (tech.prerequisites.some(p => !state.research.includes(p))) {
+                    showNotification('Сначала изучите prerequisite технологии', 'warning');
+                    return;
+                }
+                if (state.gold < tech.cost) {
+                    showNotification('Недостаточно золота', 'error');
+                    return;
+                }
+
+                state.gold -= tech.cost;
+                state.research.push(techId);
+                showNotification(`Исследовано: ${tech.name}`, 'success');
+                checkAchievements(state);
+                debouncedSave(state);
+            }
+
+            // ============================================
+            // MAIN GAME LOOP
+            // ============================================
+            let lastTime = 0;
+            let saveAccumulator = 0;
+
+            function gameLoop(timestamp) {
+                const deltaTime = timestamp - lastTime;
+                lastTime = timestamp;
+
+                const state = Game.state;
+
+                // Update play time
+                state.stats.playTime += deltaTime / 1000;
+
+                // Passive income (GPS)
+                const gps = calculateGPS(state);
+                if (gps > 0) {
+                    const earned = gps * (deltaTime / 1000);
+                    state.gold += earned;
+                    state.totalMined += earned;
+                }
+
+                // Update events
+                updateEvents(state, deltaTime);
+
+                // Update UI (batched)
+                UI.updateDisplay(state);
+                Particles.update();
+
+                // Auto-save timer
+                saveAccumulator += deltaTime;
+                if (saveAccumulator >= CONFIG.SAVE_INTERVAL) {
+                    saveGame(state);
+                    saveAccumulator = 0;
+                }
+
+                // Keep last online timestamp updated
+                state.lastOnline = Date.now();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            // ============================================
+            // INITIALIZATION
+            // ============================================
+            function init() {
+                // Load or create state
+                Game.state = loadGame();
+                initializeCounts(Game.state);
+
+                // Calculate offline progress
+                const now = Date.now();
+                const offlineTime = Math.min(now - Game.state.lastOnline, CONFIG.OFFLINE_LIMIT);
+                
+                if (offlineTime > 5000) { // More than 5 seconds offline
+                    const gps = calculateGPS(Game.state);
+                    if (gps > 0) {
+                        const offlineEarnings = gps * (offlineTime / 1000) * 0.5; // 50% efficiency offline
+                        Game.state.gold += offlineEarnings;
+                        Game.state.totalMined += offlineEarnings;
+                        
+                        // Show offline progress modal
+                        setTimeout(() => {
+                            alert(`📊 Оффлайн прогресс\n\nПока вас не было (${formatTime(offlineTime)}), ваша шахта добыла:\n\n💰 ${formatNumber(offlineEarnings.toFixed(0))} золота`);
+                        }, 500);
+                    }
+                }
+
+                // Initialize UI
+                UI.init();
+                Particles.init();
+
+                // Setup event listeners
+                UI.elements.mineButton.addEventListener('pointerdown', handleMineClick);
+                
+                // Upgrade clicks
+                document.querySelectorAll('.upgrade-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const itemId = card.dataset.id;
+                        if (TOOLS.find(t => t.id === itemId)) handleUpgradeClick(itemId, 'tools');
+                        else if (MINERS.find(m => m.id === itemId)) handleUpgradeClick(itemId, 'miners');
+                        else if (ENGINEERS.find(e => e.id === itemId)) handleUpgradeClick(itemId, 'engineers');
+                        else if (BUILDINGS.find(b => b.id === itemId)) handleUpgradeClick(itemId, 'buildings');
+                    });
+                });
+
+                // Research clicks
+                document.querySelectorAll('.research-node').forEach(node => {
+                    node.addEventListener('click', () => {
+                        handleResearchClick(node.dataset.id);
+                    });
+                });
+
+                // Settings modal
+                document.getElementById('settingsBtn').addEventListener('click', () => {
+                    document.getElementById('settingsModal').classList.add('active');
+                });
+
+                document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+                    document.getElementById('settingsModal').classList.remove('active');
+                });
+
+                // Performance mode toggle
+                const perfToggle = document.getElementById('perfModeToggle');
+                if (Game.state.settings.performanceMode) {
+                    perfToggle.classList.add('active');
+                    document.body.classList.add('performance-mode');
+                    Particles.setEnabled(false);
+                }
+
+                perfToggle.addEventListener('click', () => {
+                    perfToggle.classList.toggle('active');
+                    Game.state.settings.performanceMode = !Game.state.settings.performanceMode;
+                    document.body.classList.toggle('performance-mode');
+                    Particles.setEnabled(!Game.state.settings.performanceMode);
+                    debouncedSave(Game.state);
+                });
+
+                // Reset save button
+                document.getElementById('resetSaveBtn').addEventListener('click', () => {
+                    if (confirm('Вы уверены? Весь прогресс будет потерян!')) {
+                        resetGame();
+                    }
+                });
+
+                // Prestige system
+                document.getElementById('prestigeBtn').addEventListener('click', () => {
+                    const gain = calculatePrestigeGain(Game.state);
+                    if (gain <= 0) {
+                        showNotification('Нужно минимум 1M золота для престижа', 'warning');
+                        return;
+                    }
+
+                    document.getElementById('prestigeGainDisplay').textContent = formatNumber(gain);
+                    document.getElementById('currentPrestigeBonus').textContent = `+${(Game.state.prestige.bonus * 100).toFixed(0)}%`;
+                    document.getElementById('newPrestigeBonus').textContent = `+${((Game.state.prestige.count + gain) * 10).toFixed(0)}%`;
+                    document.getElementById('prestigeModal').classList.add('active');
+                });
+
+                document.getElementById('cancelPrestigeBtn').addEventListener('click', () => {
+                    document.getElementById('prestigeModal').classList.remove('active');
+                });
+
+                document.getElementById('confirmPrestigeBtn').addEventListener('click', () => {
+                    const newState = performPrestige(Game.state);
+                    if (newState) {
+                        Game.state = newState;
+                        UI.renderUpgrades();
+                        UI.renderResearch();
+                        saveGame(Game.state);
+                        document.getElementById('prestigeModal').classList.remove('active');
+                        showNotification('🎉 Престиж совершён!', 'success');
+                    }
+                });
+
+                // Page visibility handling
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'hidden') {
+                        saveGame(Game.state);
+                    }
+                });
+
+                // Handle page unload
+                window.addEventListener('beforeunload', () => {
+                    saveGame(Game.state);
+                });
+
+                // Hide loading overlay
+                setTimeout(() => {
+                    UI.elements.loadingOverlay.classList.add('hidden');
+                }, 500);
+
+                // Start game loop
+                requestAnimationFrame(gameLoop);
+
+                // Auto-detect performance mode on weak devices
+                if (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2) {
+                    if (!Game.state.settings.performanceMode) {
+                        Game.state.settings.performanceMode = true;
+                        document.body.classList.add('performance-mode');
+                        Particles.setEnabled(false);
+                        perfToggle.classList.add('active');
+                    }
+                }
+            }
+
+            // Public API
+            return {
+                state: null,
+                init,
+                CONFIG,
+                TOOLS,
+                MINERS,
+                ENGINEERS,
+                BUILDINGS,
+                RESEARCH_TREE,
+                ACHIEVEMENTS,
+                EVENTS,
+                formatNumber,
+                formatTime,
+                calculateClickPower,
+                calculateGPS,
+                getCostReduction,
+                calculatePrestigeGain,
+                saveGame,
+                loadGame,
+                resetGame
+            };
+        })();
+
+        // ============================================
+        // START GAME
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            Game.init();
+        });
+    </script>
+</body>
+</html>
