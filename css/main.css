@@ -1,0 +1,120 @@
+/* ============================================
+   GOLD MINING CLICKER - MAIN STYLES
+   Version 2.0 - Modular Architecture
+   ============================================ */
+
+/* CSS Reset & Base Styles */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+    /* Primary Colors */
+    --primary-gold: #ffd700;
+    --secondary-gold: #ffb347;
+    --dark-bg: #1a1a2e;
+    --darker-bg: #0f0f1a;
+    --panel-bg: #16213e;
+    
+    /* Accent Colors */
+    --accent-blue: #4a9eff;
+    --accent-green: #4ade80;
+    --accent-red: #f87171;
+    --accent-purple: #da70d6;
+    --accent-cyan: #22d3ee;
+    --accent-orange: #fb923c;
+    --accent-pink: #f472b6;
+    
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0a0;
+    --text-muted: #6b7280;
+    
+    /* UI Colors */
+    --border-color: #2a2a4a;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --success-color: #22c55e;
+    --warning-color: #f59e0b;
+    --error-color: #ef4444;
+    
+    /* Rarity Colors */
+    --rarity-common: #9ca3af;
+    --rarity-rare: #3b82f6;
+    --rarity-epic: #a855f7;
+    --rarity-legendary: #f59e0b;
+    --rarity-mythic: #ef4444;
+    
+    /* Typography */
+    --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    --font-mono: 'Courier New', Courier, monospace;
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font-main);
+    background: radial-gradient(ellipse at top, #1a1a3e 0%, var(--darker-bg) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    line-height: 1.5;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--primary-gold), var(--secondary-gold));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-gold);
+}
+
+/* Selection */
+::selection {
+    background: var(--primary-gold);
+    color: var(--dark-bg);
+}
+
+/* Focus Styles for Accessibility */
+:focus-visible {
+    outline: 2px solid var(--primary-gold);
+    outline-offset: 2px;
+}
+
+/* Screen Reader Only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
