@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>NEON ASTEROIDS - Mobile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .hud-text {
+            position: absolute;
+            color: #fff;
+            font-size: 16px;
+            text-shadow: 0 0 5px currentColor;
+        }
+
+        #score-display {
+            top: 10px;
+            left: 10px;
+            color: #0ff;
+        }
+
+        #wave-display {
+            top: 10px;
+            right: 10px;
+            color: #f0f;
+        }
+
+        #combo-display {
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #currency-display {
+            bottom: 10px;
+            left: 10px;
+            color: #fa0;
+        }
+
+        #health-bar {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 150px;
+            height: 20px;
+            border: 2px solid #f00;
+            border-radius: 3px;
+        }
+
+        #health-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f00, #ff0, #0f0);
+            transition: width 0.3s;
+        }
+
+        /* Touch Controls */
+        #touch-controls {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            pointer-events: auto;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .control-zone {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-knob {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.3);
+            border: 2px solid #0ff;
+            position: absolute;
+            transition: transform 0.1s;
+        }
+
+        #fire-btn {
+            position: absolute;
+            bottom: 200px;
+            right: 30px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px solid #f00;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #fire-btn:active {
+            background: rgba(255, 0, 0, 0.6);
+        }
+
+        /* Shop Overlay */
+        #shop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            pointer-events: auto;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #shop-overlay.active {
+            display: flex;
+        }
+
+        .shop-title {
+            color: #0ff;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0ff;
+        }
+
+        .shop-item {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .shop-item-info {
+            color: #fff;
+            flex: 1;
+        }
+
+        .shop-item-name {
+            font-size: 16px;
+            color: #0ff;
+            margin-bottom: 5px;
+        }
+
+        .shop-item-level {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .shop-item-cost {
+            color: #fa0;
+            font-size: 14px;
+        }
+
+        .buy-btn {
+            background: rgba(0, 255, 0, 0.3);
+            border: 2px solid #0f0;
+            color: #0f0;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .buy-btn:disabled {
+            background: rgba(100, 100, 100, 0.3);
+            border-color: #666;
+            color: #666;
+        }
+
+        .start-btn {
+            background: rgba(0, 255, 255, 0.3);
+            border: 3px solid #0ff;
+            color: #0ff;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-shadow: 0 0 5px #0ff;
+        }
+
+        #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            pointer-events: auto;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #game-over-screen.active {
+            display: flex;
+        }
+
+        .game-over-title {
+            color: #f00;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #f00;
+        }
+
+        .final-score {
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-layer">
+        <div id="score-display" class="hud-text">SCORE: 0</div>
+        <div id="wave-display" class="hud-text">WAVE: 1</div>
+        <div id="combo-display" class="hud-text">COMBO x1.0</div>
+        <div id="currency-display" class="hud-text">CORES: 0</div>
+        <div id="health-bar">
+            <div id="health-fill"></div>
+        </div>
+    </div>
+
+    <div id="touch-controls">
+        <div class="control-zone" id="move-zone">
+            <div class="control-knob" id="move-knob"></div>
+        </div>
+        <div class="control-zone" id="rotate-zone">
+            <div class="control-knob" id="rotate-knob"></div>
+        </div>
+    </div>
+
+    <div id="fire-btn">FIRE</div>
+
+    <div id="shop-overlay">
+        <div class="shop-title">⚡ UPGRADE SHOP ⚡</div>
+        <div class="shop-item" data-upgrade="speed">
+            <div class="shop-item-info">
+                <div class="shop-item-name">🚀 Max Speed</div>
+                <div class="shop-item-level">Level: <span class="level">0</span></div>
+                <div class="shop-item-cost">Cost: <span class="cost">10</span> cores</div>
+            </div>
+            <button class="buy-btn" onclick="buyUpgrade('speed')">BUY</button>
+        </div>
+        <div class="shop-item" data-upgrade="firerate">
+            <div class="shop-item-info">
+                <div class="shop-item-name">🔫 Fire Rate</div>
+                <div class="shop-item-level">Level: <span class="level">0</span></div>
+                <div class="shop-item-cost">Cost: <span class="cost">15</span> cores</div>
+            </div>
+            <button class="buy-btn" onclick="buyUpgrade('firerate')">BUY</button>
+        </div>
+        <div class="shop-item" data-upgrade="damage">
+            <div class="shop-item-info">
+                <div class="shop-item-name">💥 Damage</div>
+                <div class="shop-item-level">Level: <span class="level">0</span></div>
+                <div class="shop-item-cost">Cost: <span class="cost">20</span> cores</div>
+            </div>
+            <button class="buy-btn" onclick="buyUpgrade('damage')">BUY</button>
+        </div>
+        <div class="shop-item" data-upgrade="magnet">
+            <div class="shop-item-info">
+                <div class="shop-item-name">🧲 Magnet Range</div>
+                <div class="shop-item-level">Level: <span class="level">0</span></div>
+                <div class="shop-item-cost">Cost: <span class="cost">12</span> cores</div>
+            </div>
+            <button class="buy-btn" onclick="buyUpgrade('magnet')">BUY</button>
+        </div>
+        <button class="start-btn" onclick="startNextWave()">START WAVE</button>
+    </div>
+
+    <div id="game-over-screen">
+        <div class="game-over-title">GAME OVER</div>
+        <div class="final-score">Score: <span id="final-score">0</span></div>
+        <div class="final-score">Cores: <span id="final-cores">0</span></div>
+        <button class="start-btn" onclick="restartGame()">PLAY AGAIN</button>
+    </div>
+
+<script>
+// ============================================
+// NEON ASTEROIDS - MOBILE VERSION
+// Production-ready browser game with all features
+// ============================================
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+// Resize canvas to full screen
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ============================================
+// CONSTANTS & CONFIG
+// ============================================
+const COLORS = {
+    CYAN: '#00ffff',
+    MAGENTA: '#ff00ff',
+    YELLOW: '#ffff00',
+    ORANGE: '#ffa500',
+    RED: '#ff0000',
+    GREEN: '#00ff00',
+    WHITE: '#ffffff'
+};
+
+const GAME_CONFIG = {
+    SHIP_SIZE: 20,
+    SHIP_MAX_SPEED: 300,
+    SHIP_ACCELERATION: 400,
+    SHIP_FRICTION: 0.98,
+    SHIP_ROTATION_SPEED: 5,
+    BULLET_SPEED: 600,
+    BULLET_LIFETIME: 2.0,
+    ASTEROID_BASE_SPEED: 50,
+    PARTICLE_LIFETIME: 1.0,
+    FRICTION: 0.98,
+    WRAP_PADDING: 50
+};
+
+// ============================================
+// VECTOR2 CLASS
+// ============================================
+class Vector2 {
+    constructor(x = 0, y = 0) {
+        this.x = x;
+        this.y = y;
+    }
+
+    clone() { return new Vector2(this.x, this.y); }
+    
+    add(v) { this.x += v.x; this.y += v.y; return this; }
+    
+    sub(v) { this.x -= v.x; this.y -= v.y; return this; }
+    
+    multiply(scalar) { this.x *= scalar; this.y *= scalar; return this; }
+    
+    length() { return Math.sqrt(this.x * this.x + this.y * this.y); }
+    
+    normalize() {
+        const len = this.length();
+        if (len > 0) {
+            this.x /= len;
+            this.y /= len;
+        }
+        return this;
+    }
+
+    static distance(a, b) {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    static angle(a, b) {
+        return Math.atan2(b.y - a.y, b.x - a.x);
+    }
+}
+
+// ============================================
+// OBJECT POOLING SYSTEM
+// ============================================
+class ObjectPool {
+    constructor(createFn, resetFn, initialSize = 50) {
+        this.createFn = createFn;
+        this.resetFn = resetFn;
+        this.pool = [];
+        this.active = [];
+        
+        for (let i = 0; i < initialSize; i++) {
+            this.pool.push(createFn());
+        }
+    }
+
+    get() {
+        let obj;
+        if (this.pool.length > 0) {
+            obj = this.pool.pop();
+        } else {
+            obj = this.createFn();
+        }
+        this.active.push(obj);
+        return obj;
+    }
+
+    release(obj) {
+        const index = this.active.indexOf(obj);
+        if (index !== -1) {
+            this.active.splice(index, 1);
+            this.resetFn(obj);
+            this.pool.push(obj);
+        }
+    }
+
+    releaseAll() {
+        while (this.active.length > 0) {
+            this.release(this.active[0]);
+        }
+    }
+
+    getActive() { return this.active; }
+}
+
+// ============================================
+// SPATIAL HASH GRID
+// ============================================
+class SpatialGrid {
+    constructor(cellSize = 100) {
+        this.cellSize = cellSize;
+        this.grid = new Map();
+    }
+
+    clear() {
+        this.grid.clear();
+    }
+
+    getKey(x, y) {
+        const cellX = Math.floor(x / this.cellSize);
+        const cellY = Math.floor(y / this.cellSize);
+        return `${cellX},${cellY}`;
+    }
+
+    insert(obj, x, y) {
+        const key = this.getKey(x, y);
+        if (!this.grid.has(key)) {
+            this.grid.set(key, []);
+        }
+        this.grid.get(key).push(obj);
+    }
+
+    query(x, y, radius) {
+        const results = [];
+        const minCellX = Math.floor((x - radius) / this.cellSize);
+        const maxCellX = Math.floor((x + radius) / this.cellSize);
+        const minCellY = Math.floor((y - radius) / this.cellSize);
+        const maxCellY = Math.floor((y + radius) / this.cellSize);
+
+        for (let cx = minCellX; cx <= maxCellX; cx++) {
+            for (let cy = minCellY; cy <= maxCellY; cy++) {
+                const key = `${cx},${cy}`;
+                if (this.grid.has(key)) {
+                    results.push(...this.grid.get(key));
+                }
+            }
+        }
+        return results;
+    }
+}
+
+// ============================================
+// GAME ENTITIES
+// ============================================
+class Ship {
+    constructor() {
+        this.position = new Vector2(canvas.width / 2, canvas.height / 2);
+        this.velocity = new Vector2(0, 0);
+        this.rotation = -Math.PI / 2;
+        this.radius = GAME_CONFIG.SHIP_SIZE;
+        this.health = 100;
+        this.maxHealth = 100;
+        this.invincible = false;
+        this.invincibleTimer = 0;
+        
+        // Upgrades
+        this.upgrades = {
+            speed: 0,
+            firerate: 0,
+            damage: 0,
+            magnet: 0
+        };
+        
+        this.shootCooldown = 0;
+        this.thrusting = false;
+    }
+
+    getMaxSpeed() {
+        return GAME_CONFIG.SHIP_MAX_SPEED + this.upgrades.speed * 50;
+    }
+
+    getFireRate() {
+        return Math.max(0.1, 0.3 - this.upgrades.firerate * 0.03);
+    }
+
+    getDamage() {
+        return 1 + this.upgrades.damage * 0.5;
+    }
+
+    getMagnetRadius() {
+        return 100 + this.upgrades.magnet * 30;
+    }
+
+    update(dt, input) {
+        // Rotation from right joystick
+        if (input.rotateX !== 0 || input.rotateY !== 0) {
+            const angle = Math.atan2(input.rotateY, input.rotateX);
+            this.rotation = angle - Math.PI / 2;
+        }
+
+        // Thrust from left joystick
+        this.thrusting = false;
+        if (input.moveY < -0.3) {
+            this.thrusting = true;
+            const thrust = new Vector2(
+                Math.cos(this.rotation),
+                Math.sin(this.rotation)
+            );
+            thrust.multiply(GAME_CONFIG.SHIP_ACCELERATION * dt);
+            this.velocity.add(thrust);
+        }
+
+        // Apply friction
+        this.velocity.multiply(GAME_CONFIG.FRICTION);
+
+        // Clamp speed
+        const maxSpeed = this.getMaxSpeed();
+        if (this.velocity.length() > maxSpeed) {
+            this.velocity.normalize().multiply(maxSpeed);
+        }
+
+        // Update position
+        this.position.add(new Vector2(
+            this.velocity.x * dt,
+            this.velocity.y * dt
+        ));
+
+        // Wrap around
+        this.wrapPosition();
+
+        // Invincibility
+        if (this.invincible) {
+            this.invincibleTimer -= dt;
+            if (this.invincibleTimer <= 0) {
+                this.invincible = false;
+            }
+        }
+
+        // Shooting
+        if (this.shootCooldown > 0) {
+            this.shootCooldown -= dt;
+        }
+        if (input.fire && this.shootCooldown <= 0) {
+            this.shoot();
+            this.shootCooldown = this.getFireRate();
+        }
+    }
+
+    shoot() {
+        const bulletDir = new Vector2(
+            Math.cos(this.rotation),
+            Math.sin(this.rotation)
+        );
+        const bulletPos = this.position.clone().add(
+            new Vector2(
+                Math.cos(this.rotation) * this.radius,
+                Math.sin(this.rotation) * this.radius
+            )
+        );
+        
+        game.spawnBullet(bulletPos, bulletDir, this.getDamage());
+    }
+
+    wrapPosition() {
+        if (this.position.x < -GAME_CONFIG.WRAP_PADDING) {
+            this.position.x = canvas.width + GAME_CONFIG.WRAP_PADDING;
+        } else if (this.position.x > canvas.width + GAME_CONFIG.WRAP_PADDING) {
+            this.position.x = -GAME_CONFIG.WRAP_PADDING;
+        }
+        
+        if (this.position.y < -GAME_CONFIG.WRAP_PADDING) {
+            this.position.y = canvas.height + GAME_CONFIG.WRAP_PADDING;
+        } else if (this.position.y > canvas.height + GAME_CONFIG.WRAP_PADDING) {
+            this.position.y = -GAME_CONFIG.WRAP_PADDING;
+        }
+    }
+
+    takeDamage(amount) {
+        if (this.invincible) return;
+        
+        this.health -= amount;
+        this.invincible = true;
+        this.invincibleTimer = 2.0;
+        
+        game.cameraShake(15);
+        game.spawnParticles(this.position, 20, COLORS.RED);
+        
+        if (this.health <= 0) {
+            game.gameOver();
+        }
+    }
+
+    render(ctx) {
+        if (this.invincible && Math.floor(Date.now() / 100) % 2 === 0) {
+            return; // Blink effect
+        }
+
+        ctx.save();
+        ctx.translate(this.position.x, this.position.y);
+        ctx.rotate(this.rotation + Math.PI / 2);
+
+        ctx.strokeStyle = COLORS.CYAN;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = COLORS.CYAN;
+        ctx.shadowBlur = 10;
+
+        // Draw ship triangle
+        ctx.beginPath();
+        ctx.moveTo(0, -this.radius);
+        ctx.lineTo(-this.radius * 0.7, this.radius * 0.7);
+        ctx.lineTo(0, this.radius * 0.3);
+        ctx.lineTo(this.radius * 0.7, this.radius * 0.7);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Thrust particles
+        if (this.thrusting) {
+            game.spawnParticle(
+                this.position.clone().add(new Vector2(
+                    (Math.random() - 0.5) * 10,
+                    this.radius * 0.5
+                )),
+                new Vector2(0, 100 + Math.random() * 50),
+                COLORS.ORANGE,
+                0.3
+            );
+        }
+
+        ctx.restore();
+    }
+}
+
+class Bullet {
+    constructor() {
+        this.position = new Vector2(0, 0);
+        this.velocity = new Vector2(0, 0);
+        this.radius = 3;
+        this.damage = 1;
+        this.lifetime = 0;
+        this.active = false;
+    }
+
+    spawn(position, direction, damage) {
+        this.position = position.clone();
+        this.velocity = direction.clone().normalize().multiply(GAME_CONFIG.BULLET_SPEED);
+        this.damage = damage;
+        this.lifetime = GAME_CONFIG.BULLET_LIFETIME;
+        this.active = true;
+    }
+
+    update(dt) {
+        this.position.add(new Vector2(
+            this.velocity.x * dt,
+            this.velocity.y * dt
+        ));
+        this.lifetime -= dt;
+
+        // Wrap around
+        if (this.position.x < -GAME_CONFIG.WRAP_PADDING) {
+            this.position.x = canvas.width + GAME_CONFIG.WRAP_PADDING;
+        } else if (this.position.x > canvas.width + GAME_CONFIG.WRAP_PADDING) {
+            this.position.x = -GAME_CONFIG.WRAP_PADDING;
+        }
+        
+        if (this.position.y < -GAME_CONFIG.WRAP_PADDING) {
+            this.position.y = canvas.height + GAME_CONFIG.WRAP_PADDING;
+        } else if (this.position.y > canvas.height + GAME_CONFIG.WRAP_PADDING) {
+            this.position.y = -GAME_CONFIG.WRAP_PADDING;
+        }
+
+        if (this.lifetime <= 0) {
+            this.active = false;
+            game.comboMiss();
+        }
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.fillStyle = COLORS.YELLOW;
+        ctx.shadowColor = COLORS.YELLOW;
+        ctx.shadowBlur = 8;
+        
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+}
+
+class Asteroid {
+    constructor() {
+        this.position = new Vector2(0, 0);
+        this.velocity = new Vector2(0, 0);
+        this.rotation = 0;
+        this.rotationSpeed = 0;
+        this.radius = 0;
+        this.hp = 0;
+        this.size = 0; // 0: large, 1: medium, 2: small
+        this.vertices = [];
+        this.active = false;
+    }
+
+    spawn(x, y, size = 0) {
+        this.position = new Vector2(x, y);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const speed = GAME_CONFIG.ASTEROID_BASE_SPEED * (1 + size * 0.5);
+        this.velocity = new Vector2(
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed
+        );
+        
+        this.rotation = Math.random() * Math.PI * 2;
+        this.rotationSpeed = (Math.random() - 0.5) * 2;
+        
+        this.size = size;
+        this.radius = GAME_CONFIG.SHIP_SIZE * (3 - size);
+        this.hp = (3 - size) * (1 + game.ship.upgrades.damage);
+        
+        // Generate irregular vertices
+        const vertexCount = 8 + Math.floor(Math.random() * 4);
+        this.vertices = [];
+        for (let i = 0; i < vertexCount; i++) {
+            const angle = (i / vertexCount) * Math.PI * 2;
+            const variance = 0.7 + Math.random() * 0.6;
+            this.vertices.push({
+                angle: angle,
+                radius: this.radius * variance
+            });
+        }
+        
+        this.active = true;
+    }
+
+    update(dt) {
+        this.position.add(new Vector2(
+            this.velocity.x * dt,
+            this.velocity.y * dt
+        ));
+        this.rotation += this.rotationSpeed * dt;
+        
+        this.wrapPosition();
+    }
+
+    wrapPosition() {
+        const padding = this.radius + GAME_CONFIG.WRAP_PADDING;
+        if (this.position.x < -padding) {
+            this.position.x = canvas.width + padding;
+        } else if (this.position.x > canvas.width + padding) {
+            this.position.x = -padding;
+        }
+        
+        if (this.position.y < -padding) {
+            this.position.y = canvas.height + padding;
+        } else if (this.position.y > canvas.height + padding) {
+            this.position.y = -padding;
+        }
+    }
+
+    takeDamage(amount) {
+        this.hp -= amount;
+        if (this.hp <= 0) {
+            this.destroy();
+        }
+    }
+
+    destroy() {
+        this.active = false;
+        game.comboHit();
+        
+        // Spawn particles
+        game.spawnParticles(this.position, 20, this.getColor());
+        
+        // Camera shake for large asteroids
+        if (this.size === 0) {
+            game.cameraShake(10);
+        }
+        
+        // Spawn fragments
+        const fragmentCount = 2 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < fragmentCount; i++) {
+            game.spawnCoreFragment(this.position.clone());
+        }
+        
+        // Split into smaller asteroids
+        if (this.size < 2) {
+            for (let i = 0; i < 2; i++) {
+                game.spawnAsteroid(this.position.x, this.position.y, this.size + 1);
+            }
+        }
+        
+        // Add score with combo multiplier
+        const baseScore = (3 - this.size) * 100;
+        game.addScore(Math.floor(baseScore * game.comboMultiplier));
+    }
+
+    getColor() {
+        switch(this.size) {
+            case 0: return COLORS.MAGENTA;
+            case 1: return COLORS.CYAN;
+            case 2: return COLORS.YELLOW;
+            default: return COLORS.WHITE;
+        }
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.translate(this.position.x, this.position.y);
+        ctx.rotate(this.rotation);
+        
+        ctx.strokeStyle = this.getColor();
+        ctx.lineWidth = 2;
+        ctx.shadowColor = this.getColor();
+        ctx.shadowBlur = 8;
+        
+        ctx.beginPath();
+        const startVertex = this.vertices[0];
+        ctx.moveTo(
+            Math.cos(startVertex.angle) * startVertex.radius,
+            Math.sin(startVertex.angle) * startVertex.radius
+        );
+        
+        for (let i = 1; i < this.vertices.length; i++) {
+            const v = this.vertices[i];
+            ctx.lineTo(
+                Math.cos(v.angle) * v.radius,
+                Math.sin(v.angle) * v.radius
+            );
+        }
+        
+        ctx.closePath();
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+}
+
+class Particle {
+    constructor() {
+        this.position = new Vector2(0, 0);
+        this.velocity = new Vector2(0, 0);
+        this.color = COLORS.WHITE;
+        this.lifetime = 0;
+        this.maxLifetime = 0;
+        this.size = 0;
+        this.active = false;
+    }
+
+    spawn(position, velocity, color, lifetime = GAME_CONFIG.PARTICLE_LIFETIME) {
+        this.position = position.clone();
+        this.velocity = velocity.clone();
+        this.color = color;
+        this.lifetime = lifetime;
+        this.maxLifetime = lifetime;
+        this.size = 2 + Math.random() * 3;
+        this.active = true;
+    }
+
+    update(dt) {
+        this.position.add(new Vector2(
+            this.velocity.x * dt,
+            this.velocity.y * dt
+        ));
+        this.velocity.multiply(0.95); // Friction
+        this.lifetime -= dt;
+        
+        if (this.lifetime <= 0) {
+            this.active = false;
+        }
+    }
+
+    render(ctx) {
+        const alpha = this.lifetime / this.maxLifetime;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 5;
+        
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+}
+
+class CoreFragment {
+    constructor() {
+        this.position = new Vector2(0, 0);
+        this.velocity = new Vector2(0, 0);
+        this.radius = 8;
+        this.active = false;
+        this.magnetized = false;
+    }
+
+    spawn(x, y) {
+        this.position = new Vector2(x, y);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 50 + Math.random() * 100;
+        this.velocity = new Vector2(
+            Math.cos(angle) * speed,
+            Math.sin(angle) * speed
+        );
+        this.active = true;
+        this.magnetized = false;
+    }
+
+    update(dt, ship) {
+        const dist = Vector2.distance(this.position, ship.position);
+        
+        // Magnet effect
+        if (dist < ship.getMagnetRadius()) {
+            this.magnetized = true;
+        }
+        
+        if (this.magnetized) {
+            const dir = new Vector2(
+                ship.position.x - this.position.x,
+                ship.position.y - this.position.y
+            ).normalize();
+            dir.multiply(400 * dt);
+            this.position.add(dir);
+        } else {
+            this.position.add(new Vector2(
+                this.velocity.x * dt,
+                this.velocity.y * dt
+            ));
+            this.velocity.multiply(0.95);
+        }
+        
+        // Collection
+        if (dist < ship.radius + this.radius) {
+            this.active = false;
+            game.addCurrency(1);
+        }
+        
+        // Wrap around
+        this.wrapPosition();
+    }
+
+    wrapPosition() {
+        if (this.position.x < -GAME_CONFIG.WRAP_PADDING) {
+            this.position.x = canvas.width + GAME_CONFIG.WRAP_PADDING;
+        } else if (this.position.x > canvas.width + GAME_CONFIG.WRAP_PADDING) {
+            this.position.x = -GAME_CONFIG.WRAP_PADDING;
+        }
+        
+        if (this.position.y < -GAME_CONFIG.WRAP_PADDING) {
+            this.position.y = canvas.height + GAME_CONFIG.WRAP_PADDING;
+        } else if (this.position.y > canvas.height + GAME_CONFIG.WRAP_PADDING) {
+            this.position.y = -GAME_CONFIG.WRAP_PADDING;
+        }
+    }
+
+    render(ctx) {
+        ctx.save();
+        ctx.fillStyle = COLORS.ORANGE;
+        ctx.shadowColor = COLORS.ORANGE;
+        ctx.shadowBlur = 10;
+        
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Inner glow
+        ctx.fillStyle = COLORS.YELLOW;
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, this.radius * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+}
+
+// ============================================
+// INPUT HANDLER (Touch Controls)
+// ============================================
+class InputHandler {
+    constructor() {
+        this.moveX = 0;
+        this.moveY = 0;
+        this.rotateX = 0;
+        this.rotateY = 0;
+        this.fire = false;
+        
+        this.setupTouchControls();
+    }
+
+    setupTouchControls() {
+        const moveZone = document.getElementById('move-zone');
+        const moveKnob = document.getElementById('move-knob');
+        const rotateZone = document.getElementById('rotate-zone');
+        const rotateKnob = document.getElementById('rotate-knob');
+        const fireBtn = document.getElementById('fire-btn');
+
+        let moveTouchId = null;
+        let rotateTouchId = null;
+        let moveCenter = { x: 0, y: 0 };
+        let rotateCenter = { x: 0, y: 0 };
+
+        const handleMoveTouch = (touch, zone, knob, isMove) => {
+            const rect = zone.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const dx = touch.clientX - centerX;
+            const dy = touch.clientY - centerY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const maxDistance = rect.width / 2 - 30;
+            
+            const clampedDistance = Math.min(distance, maxDistance);
+            const angle = Math.atan2(dy, dx);
+            
+            const knobX = Math.cos(angle) * clampedDistance;
+            const knobY = Math.sin(angle) * clampedDistance;
+            
+            knob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+            
+            const normalizedX = knobX / maxDistance;
+            const normalizedY = knobY / maxDistance;
+            
+            if (isMove) {
+                this.moveX = normalizedX;
+                this.moveY = normalizedY;
+            } else {
+                this.rotateX = normalizedX;
+                this.rotateY = normalizedY;
+            }
+        };
+
+        const resetJoystick = (knob, isMove) => {
+            knob.style.transform = 'translate(0px, 0px)';
+            if (isMove) {
+                this.moveX = 0;
+                this.moveY = 0;
+            } else {
+                this.rotateX = 0;
+                this.rotateY = 0;
+            }
+        };
+
+        moveZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (moveTouchId === null) {
+                    moveTouchId = touch.identifier;
+                    handleMoveTouch(touch, moveZone, moveKnob, true);
+                }
+            }
+        }, { passive: false });
+
+        moveZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === moveTouchId) {
+                    handleMoveTouch(touch, moveZone, moveKnob, true);
+                }
+            }
+        }, { passive: false });
+
+        const endMoveTouch = (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === moveTouchId) {
+                    moveTouchId = null;
+                    resetJoystick(moveKnob, true);
+                }
+            }
+        };
+
+        moveZone.addEventListener('touchend', endMoveTouch);
+        moveZone.addEventListener('touchcancel', endMoveTouch);
+
+        rotateZone.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (rotateTouchId === null) {
+                    rotateTouchId = touch.identifier;
+                    handleMoveTouch(touch, rotateZone, rotateKnob, false);
+                }
+            }
+        }, { passive: false });
+
+        rotateZone.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === rotateTouchId) {
+                    handleMoveTouch(touch, rotateZone, rotateKnob, false);
+                }
+            }
+        }, { passive: false });
+
+        const endRotateTouch = (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const touch = e.changedTouches[i];
+                if (touch.identifier === rotateTouchId) {
+                    rotateTouchId = null;
+                    resetJoystick(rotateKnob, false);
+                }
+            }
+        };
+
+        rotateZone.addEventListener('touchend', endRotateTouch);
+        rotateZone.addEventListener('touchcancel', endRotateTouch);
+
+        fireBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.fire = true;
+            fireBtn.style.background = 'rgba(255, 0, 0, 0.6)';
+        });
+
+        fireBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.fire = false;
+            fireBtn.style.background = 'rgba(255, 0, 0, 0.3)';
+        });
+
+        fireBtn.addEventListener('touchcancel', () => {
+            this.fire = false;
+            fireBtn.style.background = 'rgba(255, 0, 0, 0.3)';
+        });
+    }
+
+    reset() {
+        this.moveX = 0;
+        this.moveY = 0;
+        this.rotateX = 0;
+        this.rotateY = 0;
+        this.fire = false;
+    }
+}
+
+// ============================================
+// MAIN GAME CLASS
+// ============================================
+class Game {
+    constructor() {
+        this.ship = new Ship();
+        this.input = new InputHandler();
+        this.spatialGrid = new SpatialGrid(100);
+        
+        // Object pools
+        this.bulletPool = new ObjectPool(
+            () => new Bullet(),
+            (b) => { b.active = false; },
+            100
+        );
+        
+        this.asteroidPool = new ObjectPool(
+            () => new Asteroid(),
+            (a) => { a.active = false; },
+            50
+        );
+        
+        this.particlePool = new ObjectPool(
+            () => new Particle(),
+            (p) => { p.active = false; },
+            500
+        );
+        
+        this.fragmentPool = new ObjectPool(
+            () => new CoreFragment(),
+            (f) => { f.active = false; },
+            100
+        );
+        
+        // Game state
+        this.score = 0;
+        this.currency = 0;
+        this.wave = 1;
+        this.comboMultiplier = 1.0;
+        this.comboTimer = 0;
+        this.comboHits = 0;
+        
+        this.cameraShakeOffset = new Vector2(0, 0);
+        this.cameraShakeIntensity = 0;
+        
+        this.state = 'playing'; // playing, shop, gameover
+        this.lastTime = 0;
+        
+        // Upgrade costs
+        this.upgradeCosts = {
+            speed: 10,
+            firerate: 15,
+            damage: 20,
+            magnet: 12
+        };
+        
+        this.startWave();
+    }
+
+    startWave() {
+        document.getElementById('shop-overlay').classList.remove('active');
+        this.state = 'playing';
+        
+        // Reset ship position
+        this.ship.position = new Vector2(canvas.width / 2, canvas.height / 2);
+        this.ship.velocity = new Vector2(0, 0);
+        this.ship.health = this.ship.maxHealth;
+        this.ship.invincible = true;
+        this.ship.invincibleTimer = 3.0;
+        
+        // Clear all objects
+        this.bulletPool.releaseAll();
+        this.asteroidPool.releaseAll();
+        this.particlePool.releaseAll();
+        this.fragmentPool.releaseAll();
+        
+        // Spawn asteroids for wave
+        const asteroidCount = 3 + this.wave * 2;
+        for (let i = 0; i < asteroidCount; i++) {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            
+            // Don't spawn too close to ship
+            if (Vector2.distance(new Vector2(x, y), this.ship.position) > 200) {
+                this.spawnAsteroid(x, y, 0);
+            }
+        }
+    }
+
+    spawnBullet(position, direction, damage) {
+        const bullet = this.bulletPool.get();
+        bullet.spawn(position, direction, damage);
+    }
+
+    spawnAsteroid(x, y, size) {
+        const asteroid = this.asteroidPool.get();
+        asteroid.spawn(x, y, size);
+    }
+
+    spawnParticle(position, velocity, color, lifetime) {
+        const particle = this.particlePool.get();
+        particle.spawn(position, velocity, color, lifetime);
+    }
+
+    spawnParticles(position, count, color) {
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 50 + Math.random() * 150;
+            const velocity = new Vector2(
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed
+            );
+            this.spawnParticle(position, velocity, color);
+        }
+    }
+
+    spawnCoreFragment(position) {
+        const fragment = this.fragmentPool.get();
+        fragment.spawn(position.x, position.y);
+    }
+
+    cameraShake(intensity) {
+        this.cameraShakeIntensity = intensity;
+    }
+
+    updateCameraShake(dt) {
+        if (this.cameraShakeIntensity > 0) {
+            this.cameraShakeOffset = new Vector2(
+                (Math.random() - 0.5) * this.cameraShakeIntensity,
+                (Math.random() - 0.5) * this.cameraShakeIntensity
+            );
+            this.cameraShakeIntensity -= 30 * dt;
+            if (this.cameraShakeIntensity < 0) {
+                this.cameraShakeIntensity = 0;
+                this.cameraShakeOffset = new Vector2(0, 0);
+            }
+        }
+    }
+
+    comboHit() {
+        this.comboHits++;
+        this.comboMultiplier = Math.min(5.0, 1.0 + this.comboHits * 0.1);
+        this.comboTimer = 3.0; // 3 seconds to keep combo
+    }
+
+    comboMiss() {
+        this.comboMultiplier = 1.0;
+        this.comboHits = 0;
+        this.comboTimer = 0;
+    }
+
+    updateCombo(dt) {
+        if (this.comboTimer > 0) {
+            this.comboTimer -= dt;
+            if (this.comboTimer <= 0) {
+                this.comboMiss();
+            }
+        }
+    }
+
+    addScore(points) {
+        this.score += points;
+    }
+
+    addCurrency(amount) {
+        this.currency += amount;
+    }
+
+    checkCollisions() {
+        this.spatialGrid.clear();
+        
+        // Insert asteroids into grid
+        const asteroids = this.asteroidPool.getActive();
+        for (const asteroid of asteroids) {
+            this.spatialGrid.insert(asteroid, asteroid.position.x, asteroid.position.y);
+        }
+        
+        // Check bullet-asteroid collisions
+        const bullets = this.bulletPool.getActive();
+        for (const bullet of bullets) {
+            const nearby = this.spatialGrid.query(bullet.position.x, bullet.position.y, bullet.radius + 50);
+            for (const asteroid of nearby) {
+                if (Vector2.distance(bullet.position, asteroid.position) < bullet.radius + asteroid.radius) {
+                    asteroid.takeDamage(bullet.damage);
+                    bullet.active = false;
+                    break;
+                }
+            }
+        }
+        
+        // Check ship-asteroid collisions
+        for (const asteroid of asteroids) {
+            if (Vector2.distance(this.ship.position, asteroid.position) < this.ship.radius + asteroid.radius) {
+                this.ship.takeDamage(30);
+            }
+        }
+    }
+
+    updateUI() {
+        document.getElementById('score-display').textContent = `SCORE: ${this.score}`;
+        document.getElementById('wave-display').textContent = `WAVE: ${this.wave}`;
+        document.getElementById('currency-display').textContent = `CORES: ${this.currency}`;
+        
+        const comboDisplay = document.getElementById('combo-display');
+        comboDisplay.textContent = `COMBO x${this.comboMultiplier.toFixed(1)}`;
+        
+        // Pulsing effect for high combo
+        const scale = 1 + Math.sin(Date.now() / 200) * 0.2 * (this.comboMultiplier - 1) / 4;
+        comboDisplay.style.transform = `translateX(-50%) scale(${scale})`;
+        
+        // Health bar
+        const healthPercent = (this.ship.health / this.ship.maxHealth) * 100;
+        document.getElementById('health-fill').style.width = `${Math.max(0, healthPercent)}%`;
+    }
+
+    updateShopUI() {
+        for (const [upgrade, cost] of Object.entries(this.upgradeCosts)) {
+            const item = document.querySelector(`[data-upgrade="${upgrade}"]`);
+            const level = this.ship.upgrades[upgrade];
+            const currentCost = cost * (level + 1);
+            
+            item.querySelector('.level').textContent = level;
+            item.querySelector('.cost').textContent = currentCost;
+            
+            const buyBtn = item.querySelector('.buy-btn');
+            buyBtn.disabled = this.currency < currentCost;
+        }
+    }
+
+    openShop() {
+        this.state = 'shop';
+        this.updateShopUI();
+        document.getElementById('shop-overlay').classList.add('active');
+    }
+
+    gameOver() {
+        this.state = 'gameover';
+        document.getElementById('final-score').textContent = this.score;
+        document.getElementById('final-cores').textContent = this.currency;
+        document.getElementById('game-over-screen').classList.add('active');
+    }
+
+    update(dt) {
+        if (this.state !== 'playing') return;
+        
+        // Update entities
+        this.ship.update(dt, this.input);
+        
+        const bullets = this.bulletPool.getActive();
+        for (let i = bullets.length - 1; i >= 0; i--) {
+            bullets[i].update(dt);
+            if (!bullets[i].active) {
+                this.bulletPool.release(bullets[i]);
+            }
+        }
+        
+        const asteroids = this.asteroidPool.getActive();
+        for (let i = asteroids.length - 1; i >= 0; i--) {
+            asteroids[i].update(dt);
+            if (!asteroids[i].active) {
+                this.asteroidPool.release(asteroids[i]);
+            }
+        }
+        
+        const particles = this.particlePool.getActive();
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update(dt);
+            if (!particles[i].active) {
+                this.particlePool.release(particles[i]);
+            }
+        }
+        
+        const fragments = this.fragmentPool.getActive();
+        for (let i = fragments.length - 1; i >= 0; i--) {
+            fragments[i].update(dt, this.ship);
+            if (!fragments[i].active) {
+                this.fragmentPool.release(fragments[i]);
+            }
+        }
+        
+        // Combo system
+        this.updateCombo(dt);
+        
+        // Collisions
+        this.checkCollisions();
+        
+        // Camera shake
+        this.updateCameraShake(dt);
+        
+        // Check wave completion
+        if (asteroids.length === 0) {
+            this.wave++;
+            this.openShop();
+        }
+        
+        // Update UI
+        this.updateUI();
+    }
+
+    render() {
+        // Clear screen
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save();
+        
+        // Apply camera shake
+        ctx.translate(this.cameraShakeOffset.x, this.cameraShakeOffset.y);
+        
+        // Render entities
+        const fragments = this.fragmentPool.getActive();
+        for (const fragment of fragments) {
+            fragment.render(ctx);
+        }
+        
+        const particles = this.particlePool.getActive();
+        for (const particle of particles) {
+            particle.render(ctx);
+        }
+        
+        const bullets = this.bulletPool.getActive();
+        for (const bullet of bullets) {
+            bullet.render(ctx);
+        }
+        
+        const asteroids = this.asteroidPool.getActive();
+        for (const asteroid of asteroids) {
+            asteroid.render(ctx);
+        }
+        
+        if (this.state === 'playing') {
+            this.ship.render(ctx);
+        }
+        
+        ctx.restore();
+    }
+
+    gameLoop(timestamp) {
+        const dt = Math.min((timestamp - this.lastTime) / 1000, 0.1); // Cap dt at 0.1s
+        this.lastTime = timestamp;
+        
+        this.update(dt);
+        this.render();
+        
+        requestAnimationFrame((t) => this.gameLoop(t));
+    }
+
+    start() {
+        requestAnimationFrame((t) => this.gameLoop(t));
+    }
+}
+
+// ============================================
+// GLOBAL FUNCTIONS FOR HTML BUTTONS
+// ============================================
+let game;
+
+function initGame() {
+    game = new Game();
+    game.start();
+}
+
+function buyUpgrade(type) {
+    const baseCosts = {
+        speed: 10,
+        firerate: 15,
+        damage: 20,
+        magnet: 12
+    };
+    
+    const level = game.ship.upgrades[type];
+    const cost = baseCosts[type] * (level + 1);
+    
+    if (game.currency >= cost) {
+        game.currency -= cost;
+        game.ship.upgrades[type]++;
+        game.updateShopUI();
+    }
+}
+
+function startNextWave() {
+    game.startWave();
+}
+
+function restartGame() {
+    game = new Game();
+    document.getElementById('game-over-screen').classList.remove('active');
+}
+
+// Initialize on load
+window.onload = initGame;
+</script>
+</body>
+</html>
